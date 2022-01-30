@@ -1,0 +1,10 @@
+application:
+    mapping:
+        *: App\Modules\*Module
+
+services:
+    router: App\Router\ApiRouterFactory::createRouter
+
+security:
+    users:
+        admin: 'admin'

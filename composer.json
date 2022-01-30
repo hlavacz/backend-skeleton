@@ -1,0 +1,18 @@
+{
+    "name": "hlavacz/nette-api-backend",
+    "description": "Lightweight nette backend used for api",
+    "keywords": ["nette","backend","api","headsoft"],
+    "type": "project",
+    "license": ["MIT", "BSD-3-Clause", "GPL-2.0", "GPL-3.0"],
+    "require": {
+        "php": ">= 7.4",
+        "nette/application": "^3.1",
+        "tracy/tracy": "^2.9",
+        "nette/bootstrap": "^3.1",
+        "nette/security": "^v3.1",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "classmap": ["app/Bootstrap.php"]
+    }
+}
