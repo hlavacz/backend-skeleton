@@ -4,6 +4,11 @@
     "keywords": ["nette","backend","api","headsoft"],
     "type": "project",
     "license": ["MIT", "BSD-3-Clause", "GPL-2.0", "GPL-3.0"],
+    "authors": [{
+        "name": "Hlava",
+        "email": "hlavicka@headsoft.cz"
+    }
+    ],
     "require": {
         "php": ">= 7.4",
         "nette/application": "^3.1",
