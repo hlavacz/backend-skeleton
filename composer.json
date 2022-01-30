@@ -1,5 +1,5 @@
 {
-    "name": "hlavacz/nette-api-backend",
+    "name": "hlavacz/backend-skeleton",
     "description": "Lightweight nette backend used for api",
     "keywords": ["nette","backend","api","headsoft"],
     "type": "project",
