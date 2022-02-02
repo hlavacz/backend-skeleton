@@ -9,14 +9,12 @@ use Nette\Security\AuthenticationException;
 final class AclModule extends Module
 {
 
-    public function runLogin($payload)
+    public function runLogin(array $user)
     {
-        if (!isset($payload['username']) || !isset($payload['password'])) {
-            $this->runBlackHole();
-            exit();
-        }
+        $username = $user['username'];
+        $password = $user['password'];
         try {
-            $this->getUser()->login($payload['username'],$payload['password']);
+            $this->getUser()->login($username,$password);
         } catch (AuthenticationException $exception) {
             $this->response = [
                 'status'=>'error',

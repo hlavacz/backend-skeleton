@@ -7,6 +7,7 @@ use Nette\Application\Response;
 use Nette\Application\Request;
 use Nette\Application\UI\ComponentReflection;
 use Nette\Application\UI\ITemplateFactory;
+use Nette\Database\Explorer;
 use Nette\DI\ServiceCreationException;
 use Nette\Security\User;
 use Tracy\Debugger;
@@ -14,6 +15,7 @@ use Tracy\Debugger;
 
 define('ERRNO_NO_ACTION', 3000);
 define('ERRNO_LOGIN_FAILED', 3001);
+define('ERRNO_API_DATA', 3002);
 
 
 abstract class Module implements IPresenter
@@ -23,6 +25,8 @@ abstract class Module implements IPresenter
     private int $responseCode = 200;
     private Request $request;
     private User $user;
+    public Explorer $db;
+
 
     /**
      * Access to reflection.
@@ -38,23 +42,37 @@ abstract class Module implements IPresenter
      */
     public function run(Request $request): Response
     {
-
         $this->request = $request;
         $action = $this->request->getParameter('action');
         $rc = $this->getReflection();
         $payload = $this->getPayloadData();
-        if ($payload && $rc->hasMethod('run' . $action)) {
-            $rm = $rc->getMethod('run' . $action);
-            $rm->invokeArgs($this, $payload);
+        if ($rc->hasMethod('run' . $action)) {
+            try {
+                $rm = $rc->getMethod('run' . $action);
+                if ($payload) {
+                    $rm->invokeArgs($this, $payload);
+                } else {
+                    $rm->invoke($this);
+                }
+            } catch (\ArgumentCountError $exception) {
+                if (Debugger::$productionMode === false) {
+                    $this->response['method'] = $action;
+                    $this->response['payload'] = $payload;
+                }
+                $this->runBlackHole();
+            } catch (\ReflectionException $exception) {
+                $this->runBlackHole();
+            }
         } else {
             $this->runBlackHole();
         }
         return new ApiResponse($this->response, $this->responseCode);
     }
 
-    public function injectPrimary(User $user = null): void
+    public function injectPrimary(User $user = null, Explorer $db = null): void
     {
         $this->user = $user;
+        $this->db = $db;
     }
 
 
