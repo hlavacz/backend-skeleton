@@ -16,6 +16,7 @@ use Tracy\Debugger;
 define('ERRNO_NO_ACTION', 3000);
 define('ERRNO_LOGIN_FAILED', 3001);
 define('ERRNO_API_DATA', 3002);
+define('ERRNO_NOT_AUTHENTICATED', 3003);
 
 
 abstract class Module implements IPresenter
@@ -26,6 +27,17 @@ abstract class Module implements IPresenter
     private Request $request;
     private User $user;
     public Explorer $db;
+    public bool $authenticated = false;
+
+
+    public function beforeRun()
+    {
+    }
+
+    protected function getAction() : string
+    {
+        return $this->request->getParameter('action');
+    }
 
 
     /**
@@ -43,28 +55,34 @@ abstract class Module implements IPresenter
     public function run(Request $request): Response
     {
         $this->request = $request;
-        $action = $this->request->getParameter('action');
-        $rc = $this->getReflection();
-        $payload = $this->getPayloadData();
-        if ($rc->hasMethod('run' . $action)) {
-            try {
-                $rm = $rc->getMethod('run' . $action);
-                if ($payload) {
-                    $rm->invokeArgs($this, $payload);
-                } else {
-                    $rm->invoke($this);
+        $this->authenticated = $this->getUser()->isLoggedIn();
+        $this->beforeRun();
+        if ($this->authenticated) {
+            $action = $this->request->getParameter('action');
+            $rc = $this->getReflection();
+            $payload = $this->getPayloadData();
+            if ($rc->hasMethod('run' . $action)) {
+                try {
+                    $rm = $rc->getMethod('run' . $action);
+                    if ($payload) {
+                        $rm->invokeArgs($this, $payload);
+                    } else {
+                        $rm->invoke($this);
+                    }
+                } catch (\ArgumentCountError $exception) {
+                    if (Debugger::$productionMode === false) {
+                        $this->response['method'] = $action;
+                        $this->response['payload'] = $payload;
+                    }
+                    $this->runBlackHole();
+                } catch (\ReflectionException $exception) {
+                    $this->runBlackHole();
                 }
-            } catch (\ArgumentCountError $exception) {
-                if (Debugger::$productionMode === false) {
-                    $this->response['method'] = $action;
-                    $this->response['payload'] = $payload;
-                }
-                $this->runBlackHole();
-            } catch (\ReflectionException $exception) {
+            } else {
                 $this->runBlackHole();
             }
         } else {
-            $this->runBlackHole();
+            $this->response = ['status' => 'error', 'errno' => ERRNO_NOT_AUTHENTICATED, 'message' => 'Not authenticated'];
         }
         return new ApiResponse($this->response, $this->responseCode);
     }

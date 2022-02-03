@@ -1,0 +1,3 @@
+session:
+	expiration: 14 days
+	cookieSamesite: None

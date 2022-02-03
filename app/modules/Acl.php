@@ -9,6 +9,14 @@ use Nette\Security\AuthenticationException;
 final class AclModule extends Module
 {
 
+    public function beforeRun()
+    {
+        if ($this->getAction() === 'login') {
+            $this->authenticated = true;
+        }
+    }
+
+
     public function runLogin(array $user)
     {
         $username = $user['username'];
